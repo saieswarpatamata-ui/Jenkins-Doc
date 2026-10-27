@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎬 CineVerse · Movie Ticket Booking</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background: radial-gradient(circle at 20% 30%, #0a0a1a, #020208);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.2rem;
+            color: #f5f5f5;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated background particles (subtle) */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><circle cx="20" cy="50" r="1.5" fill="%23ffd966" opacity="0.3"/><circle cx="180" cy="30" r="2" fill="%23ffd966" opacity="0.2"/><circle cx="100" cy="150" r="1" fill="%23ffffff" opacity="0.2"/><circle cx="50" cy="180" r="2.5" fill="%23ffb347" opacity="0.15"/><circle cx="150" cy="100" r="1.8" fill="%23ffd966" opacity="0.25"/></svg>');
+            background-size: 300px 300px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .booking-container {
+            max-width: 1200px;
+            width: 100%;
+            background: rgba(12, 12, 28, 0.7);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-radius: 3.5rem;
+            padding: 2rem 2.2rem;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 215, 0, 0.15), 0 0 50px rgba(255, 200, 0, 0.15);
+            transition: box-shadow 0.4s ease;
+            position: relative;
+            z-index: 1;
+        }
+
+        .booking-container:hover {
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.95), 0 0 0 1.5px rgba(255, 215, 0, 0.4), 0 0 70px rgba(255, 215, 0, 0.25);
+        }
+
+        h1 {
+            font-size: 2.6rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+            color: #fff;
+            text-shadow: 0 0 25px rgba(255, 215, 0, 0.7);
+            margin-bottom: 2rem;
+            letter-spacing: -0.5px;
+        }
+
+        h1 i {
+            color: #ffd966;
+            font-size: 2.9rem;
+            filter: drop-shadow(0 0 12px #ffb347);
+            animation: iconFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        /* Movie selector – modern pill buttons */
+        .movie-picker {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 0.7rem 0.9rem;
+            border-radius: 4rem;
+            border: 1px solid rgba(255, 215, 0, 0.25);
+            backdrop-filter: blur(5px);
+        }
+
+        .movie-btn {
+            background: transparent;
+            border: none;
+            color: #c0c0d0;
+            padding: 0.8rem 1.9rem;
+            font-size: 1rem;
+            font-weight: 500;
+            border-radius: 3rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1);
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            border: 1px solid transparent;
+            letter-spacing: 0.2px;
+            white-space: nowrap;
+        }
+
+        .movie-btn i {
+            font-size: 1.2rem;
+            color: #ffd966;
+            transition: transform 0.2s;
+        }
+
+        .movie-btn:hover {
+            background: rgba(255, 215, 0, 0.12);
+            color: #fff;
+            border-color: rgba(255, 215, 0, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .movie-btn.active {
+            background: linear-gradient(135deg, #ffd966, #ffb347);
+            color: #0a0a1a;
+            font-weight: 700;
+            border: 1px solid #fff3c9;
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.8), 0 8px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .movie-btn.active i {
+            color: #0a0a1a;
+            transform: rotate(8deg) scale(1.1);
+        }
+
+        /* screen */
+        .screen-area {
+            display: flex;
+            justify-content: center;
+            margin: 1.5rem 0 2.2rem 0;
+            perspective: 500px;
+        }
+
+        .screen {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(200, 200, 255, 0.15) 100%);
+            width: 75%;
+            height: 38px;
+            border-radius: 100px 100px 12px 12px;
+            box-shadow: 0 0 60px rgba(255, 255, 255, 0.5), 0 15px 40px rgba(0, 0, 0, 0.8);
+            border-bottom: 4px solid #ffd966;
+            position: relative;
+            transform: rotateX(2deg);
+            transition: box-shadow 0.3s, transform 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 8px;
+            color: #1a1a2e;
+            text-transform: uppercase;
+            text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+        }
+
+        .screen::after {
+            content: "SCREEN";
+            opacity: 0.9;
+        }
+
+        /* seat grid */
+        .seat-grid {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.8rem;
+            margin: 2rem 0 1.8rem 0;
+            padding: 1rem 0.8rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 3rem;
+            border: 1px solid rgba(255, 215, 0, 0.15);
+        }
+
+        .seat-row {
+            display: flex;
+            gap: 0.7rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .seat {
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 14px 14px 8px 8px;
+            border: 1.5px solid rgba(255, 215, 0, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #b0b0c0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.6);
+            position: relative;
+            line-height: 1;
+        }
+
+        .seat:hover:not(.booked):not(.selected) {
+            background: rgba(255, 215, 0, 0.25);
+            border-color: #ffd966;
+            color: #fff;
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 15px 25px -8px #ffd966;
+        }
+
+        .seat.selected {
+            background: linear-gradient(145deg, #ffd966, #ffb347);
+            border-color: #fff;
+            color: #0a0a1a;
+            font-weight: 800;
+            box-shadow: 0 0 25px gold, 0 8px 15px black;
+            transform: scale(1.06);
+            animation: pulseSeat 2s infinite alternate;
+        }
+
+        @keyframes pulseSeat {
+            0% { box-shadow: 0 0 12px #ffd966, 0 5px 15px black; }
+            100% { box-shadow: 0 0 30px #ffd966, 0 8px 22px black; }
+        }
+
+        .seat.booked {
+            background: #1e1e2e;
+            border-color: #444;
+            color: #555;
+            cursor: not-allowed;
+            box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.9);
+            opacity: 0.7;
+            font-size: 1.2rem;
+        }
+
+        .seat.booked::before {
+            content: "✕";
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #aa5555;
+        }
+
+        .seat.booked span, .seat.selected span {
+            display: none;
+        }
+
+        .seat.selected::before {
+            content: "✓";
+            font-size: 1.3rem;
+            font-weight: 900;
+            color: #0a0a1a;
+        }
+
+        /* legend */
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 2.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            font-size: 0.9rem;
+            color: #b0b0c0;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+        }
+
+        .legend-box {
+            width: 30px;
+            height: 30px;
+            border-radius: 9px 9px 5px 5px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1.5px solid rgba(255, 215, 0, 0.35);
+        }
+
+        .legend-box.selected-box {
+            background: linear-gradient(145deg, #ffd966, #ffb347);
+            border-color: white;
+            box-shadow: 0 0 15px gold;
+        }
+
+        .legend-box.booked-box {
+            background: #1e1e2e;
+            border-color: #444;
+            position: relative;
+        }
+
+        .legend-box.booked-box::after {
+            content: "✕";
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #aa5555;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        /* summary bar */
+        .summary {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(0, 0, 0, 0.65);
+            border-radius: 4rem;
+            padding: 1rem 2.2rem;
+            border: 1px solid rgba(255, 215, 0, 0.5);
+            margin-top: 1rem;
+            gap: 1.2rem;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(6px);
+        }
+
+        .info-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2.2rem;
+            align-items: center;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .info-item i {
+            font-size: 1.6rem;
+            color: #ffd966;
+            width: 28px;
+            text-align: center;
+            filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.7));
+        }
+
+        .info-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #999;
+        }
+
+        .info-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            line-height: 1.2;
+            text-shadow: 0 0 12px rgba(255, 215, 0, 0.4);
+        }
+
+        .book-btn {
+            background: linear-gradient(135deg, #ffd966, #ffb347);
+            border: none;
+            color: #0a0a1a;
+            font-weight: 800;
+            font-size: 1.2rem;
+            padding: 1rem 2.8rem;
+            border-radius: 3.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.7);
+            transition: all 0.3s;
+            letter-spacing: 0.5px;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            white-space: nowrap;
+        }
+
+        .book-btn:hover:not(:disabled) {
+            transform: scale(1.04);
+            box-shadow: 0 0 45px gold, 0 10px 30px black;
+        }
+
+        .book-btn:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+
+        .book-btn:disabled {
+            opacity: 0.4;
+            transform: none;
+            box-shadow: none;
+            cursor: not-allowed;
+            filter: grayscale(0.8);
+        }
+
+        .book-btn i {
+            font-size: 1.3rem;
+        }
+
+        /* toast notification */
+        .toast {
+            position: fixed;
+            bottom: 35px;
+            left: 50%;
+            transform: translateX(-50%) translateY(120px);
+            background: #12121f;
+            color: #fff;
+            padding: 1rem 2.8rem;
+            border-radius: 60px;
+            border-left: 10px solid #ffd966;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.9), 0 0 30px gold;
+            font-weight: 500;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            opacity: 0;
+            transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2), opacity 0.3s;
+            pointer-events: none;
+            z-index: 2000;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 215, 0, 0.7);
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast i {
+            color: #ffd966;
+            font-size: 1.9rem;
+        }
+
+        .footer-note {
+            text-align: center;
+            margin-top: 1.4rem;
+            color: #666;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            font-weight: 300;
+        }
+
+        /* responsive */
+        @media (max-width: 850px) {
+            .booking-container { padding: 1.6rem; }
+            h1 { font-size: 2rem; }
+            .movie-btn { padding: 0.7rem 1.4rem; font-size: 0.9rem; }
+            .seat { width: 40px; height: 40px; font-size: 0.7rem; }
+            .summary { flex-direction: column; align-items: stretch; }
+            .book-btn { justify-content: center; }
+            .info-panel { gap: 1.2rem; justify-content: space-between; }
+            .legend { gap: 1.5rem; }
+            .toast { white-space: normal; width: 90%; text-align: center; }
+        }
+
+        @media (max-width: 550px) {
+            .seat { width: 34px; height: 34px; border-radius: 10px 10px 5px 5px; font-size: 0.65rem; }
+            .seat-row { gap: 0.4rem; }
+            .screen { width: 90%; }
+            .info-value { font-size: 1.2rem; }
+            .info-item i { font-size: 1.3rem; }
+            h1 { font-size: 1.6rem; }
+            .movie-btn { padding: 0.5rem 1rem; font-size: 0.8rem; }
+        }
+
+        @media (max-width: 400px) {
+            .seat { width: 28px; height: 28px; font-size: 0.6rem; }
+            .seat-row { gap: 0.25rem; }
+            .legend { gap: 0.8rem; font-size: 0.75rem; }
+            .legend-box { width: 24px; height: 24px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="booking-container">
+        <h1>
+            <i class="fas fa-film"></i> CineVerse
+        </h1>
+
+        <!-- Movie selector -->
+        <div class="movie-picker">
+            <button class="movie-btn active" data-movie="Dune: Part Two" data-price="12">
+                <i class="fas fa-sun"></i> Dune: Part Two
+            </button>
+            <button class="movie-btn" data-movie="Oppenheimer" data-price="11">
+                <i class="fas fa-atom"></i> Oppenheimer
+            </button>
+            <button class="movie-btn" data-movie="Barbie" data-price="10">
+                <i class="fas fa-star"></i> Barbie
+            </button>
+            <button class="movie-btn" data-movie="The Batman" data-price="13">
+                <i class="fas fa-bat"></i> The Batman
+            </button>
+        </div>
+
+        <!-- screen -->
+        <div class="screen-area">
+            <div class="screen"></div>
+        </div>
+
+        <!-- seats grid injected via JS -->
+        <div class="seat-grid" id="seatGrid"></div>
+
+        <!-- legend -->
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-box"></div> <span>Available</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box selected-box"></div> <span>Selected</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box booked-box"></div> <span>Booked</span>
+            </div>
+        </div>
+
+        <!-- summary + book button -->
+        <div class="summary">
+            <div class="info-panel">
+                <div class="info-item">
+                    <i class="fas fa-ticket-alt"></i>
+                    <div class="info-text">
+                        <span class="info-label">Selected</span>
+                        <span class="info-value" id="selectedCount">0</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-tag"></i>
+                    <div class="info-text">
+                        <span class="info-label">Total</span>
+                        <span class="info-value" id="totalPrice">$0</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-clock"></i>
+                    <div class="info-text">
+                        <span class="info-label">Showtime</span>
+                        <span class="info-value">7:30 PM</span>
+                    </div>
+                </div>
+            </div>
+            <button class="book-btn" id="bookBtn">
+                <i class="fas fa-popcorn"></i> Book now
+            </button>
+        </div>
+
+        <div class="footer-note">
+            <i class="fas fa-couch"></i> Pick your seats – premium experience
+        </div>
+    </div>
+
+    <!-- toast message -->
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMessage">Booking confirmed!</span>
+    </div>
+
+    <script>
+        (function() {
+            // ================= CONFIG =================
+            const ROWS = 5;
+            const SEATS_PER_ROW = 8;
+            
+            // Pre-booked seats (fixed pattern to simulate real occupancy)
+            const fixedBooked = [
+                '1-3', '1-4', '1-5',
+                '2-2', '2-7', '2-8',
+                '3-1', '3-2', '3-6',
+                '4-4', '4-5', '4-6', '4-8',
+                '5-1', '5-2', '5-3', '5-7'
+            ];
+            
+            const bookedSeats = new Set(fixedBooked);
+
+            // State
+            let currentMovie = 'Dune: Part Two';
+            let currentPrice = 12;
+            let selectedSeats = new Set();
+
+            // DOM references
+            const seatGrid = document.getElementById('seatGrid');
+            const selectedCountEl = document.getElementById('selectedCount');
+            const totalPriceEl = document.getElementById('totalPrice');
+            const bookBtn = document.getElementById('bookBtn');
+            const movieBtns = document.querySelectorAll('.movie-btn');
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+
+            // ================= RENDER SEATS =================
+            function renderSeats() {
+                seatGrid.innerHTML = '';
+                for (let r = 1; r <= ROWS; r++) {
+                    const rowDiv = document.createElement('div');
+                    rowDiv.className = 'seat-row';
+                    
+                    for (let c = 1; c <= SEATS_PER_ROW; c++) {
+                        const seatKey = `${r}-${c}`;
+                        const seat = document.createElement('div');
+                        seat.className = 'seat';
+                        seat.dataset.row = r;
+                        seat.dataset.col = c;
+                        seat.dataset.key = seatKey;
+
+                        // booked?
+                        if (bookedSeats.has(seatKey)) {
+                            seat.classList.add('booked');
+                            seat.setAttribute('aria-label', `Seat ${seatKey} already booked`);
+                        } else {
+                            seat.setAttribute('aria-label', `Seat ${seatKey} available`);
+                        }
+
+                        // selected?
+                        if (selectedSeats.has(seatKey) && !bookedSeats.has(seatKey)) {
+                            seat.classList.add('selected');
+                        } else if (selectedSeats.has(seatKey) && bookedSeats.has(seatKey)) {
+                            selectedSeats.delete(seatKey); // edge case
+                        }
+
+                        // Label: row number + letter (1A, 2B, etc.)
+                        const label = document.createElement('span');
+                        label.textContent = `${r}${String.fromCharCode(64 + c)}`;
+                        seat.appendChild(label);
+
+                        // click handler
+                        seat.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            if (bookedSeats.has(seatKey)) return; // ignore booked
+
+                            if (selectedSeats.has(seatKey)) {
+                                selectedSeats.delete(seatKey);
+                                seat.classList.remove('selected');
+                            } else {
+                                selectedSeats.add(seatKey);
+                                seat.classList.add('selected');
+                            }
+                            updateSummary();
+                        });
+
+                        rowDiv.appendChild(seat);
+                    }
+                    seatGrid.appendChild(rowDiv);
+                }
+                updateSummary();
+            }
+
+            // ================= UPDATE SUMMARY =================
+            function updateSummary() {
+                const count = selectedSeats.size;
+                selectedCountEl.textContent = count;
+                const total = count * currentPrice;
+                totalPriceEl.textContent = `$${total}`;
+                bookBtn.disabled = count === 0;
+            }
+
+            // ================= SET MOVIE =================
+            function setMovie(movieName, price, activeBtn) {
+                currentMovie = movieName;
+                currentPrice = price;
+                
+                // Update active class
+                movieBtns.forEach(btn => btn.classList.remove('active'));
+                activeBtn.classList.add('active');
+
+                // Clear selected seats when switching movies
+                selectedSeats.clear();
+                
+                // Re-render seats (this also resets any visual selection)
+                renderSeats();
+                
+                // Show toast notification
+                showToast(`Now showing: ${movieName} – $${price} per seat`, true);
+            }
+
+            // ================= TOAST =================
+            function showToast(message, isSuccess = true) {
+                toastMessage.textContent = message;
+                const icon = toast.querySelector('i');
+                if (isSuccess) {
+                    icon.className = 'fas fa-check-circle';
+                    icon.style.color = '#ffd966';
+                } else {
+                    icon.className = 'fas fa-exclamation-circle';
+                    icon.style.color = '#ff6b6b';
+                }
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 2800);
+            }
+
+            // ================= BOOKING =================
+            function handleBooking() {
+                const count = selectedSeats.size;
+                if (count === 0) {
+                    showToast('Please select at least one seat', false);
+                    return;
+                }
+
+                // Capture seat list and total before clearing
+                const seatList = Array.from(selectedSeats).join(', ');
+                const totalAmount = count * currentPrice;
+
+                // Mark selected seats as booked (permanent)
+                selectedSeats.forEach(seatKey => {
+                    bookedSeats.add(seatKey);
+                });
+
+                // Clear selection
+                selectedSeats.clear();
+
+                // Re-render to update UI (booked seats now show as booked)
+                renderSeats();
+
+                // Success toast with details
+                showToast(`✅ ${count} seat(s) booked for ${currentMovie}! Total $${totalAmount}`, true);
+            }
+
+            // ================= INIT =================
+            function init() {
+                // Initial render
+                renderSeats();
+
+                // Movie button listeners
+                movieBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const movie = btn.dataset.movie;
+                        const price = parseFloat(btn.dataset.price);
+                        setMovie(movie, price, btn);
+                    });
+                });
+
+                // Book button listener
+                bookBtn.addEventListener('click', handleBooking);
+
+                // Set initial price sync (default movie active)
+                currentPrice = 12;
+                updateSummary();
+
+                // Subtle screen animation
+                const screenEl = document.querySelector('.screen');
+                if (screenEl) {
+                    setInterval(() => {
+                        screenEl.style.boxShadow = '0 0 80px rgba(255, 215, 0, 0.7), 0 15px 40px rgba(0, 0, 0, 0.8)';
+                        screenEl.style.transform = 'rotateX(2deg) scale(1.01)';
+                        setTimeout(() => {
+                            screenEl.style.boxShadow = '0 0 60px rgba(255, 255, 255, 0.5), 0 15px 40px rgba(0, 0, 0, 0.8)';
+                            screenEl.style.transform = 'rotateX(2deg) scale(1)';
+                        }, 800);
+                    }, 3000);
+                }
+            }
+
+            // Start
+            init();
+        })();
+    </script>
+</body>
+</html>
